@@ -17,6 +17,10 @@ _____
 + IDE (Integrated development environment)
 + Платформа JavaFX
 
+## Архитектура 
+<p align="center" width="100%">
+    <img width="60%" src=>
+</p>
 
 ## Установка
 _____
