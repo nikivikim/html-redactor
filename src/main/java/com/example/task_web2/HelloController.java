@@ -15,21 +15,28 @@ public class HelloController {
     public WebView webview;
     public HTMLEditor htmleditor;
     public TextArea textarea;
+    public TextArea textareaforcode;
 
     public void onOpen(ActionEvent actionEvent) {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Open Document");
-        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("HTML files (*.html)", "*.html");
-        FileChooser.ExtensionFilter txtFilter = new FileChooser.ExtensionFilter("Text files (*.txt)", "*.txt");
-        fileChooser.getExtensionFilters().addAll(extFilter, txtFilter);
-        File file = fileChooser.showOpenDialog(textarea.getScene().getWindow());
+        fileChooser.setTitle("Open HTML File");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("HTML Files", "*.html"));
+        File file = fileChooser.showOpenDialog(null);
         if (file != null) {
-            String extension = getFileExtension(file);
-            if (extension.equals("html")) {
-                loadHTML(file);
-            } else if (extension.equals("txt")) {
-                loadText(file);
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                StringBuilder htmlContent = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    htmlContent.append(line).append("\n");
+                }
+                String html = htmlContent.toString();
+                htmleditor.setHtmlText(html);
+                webview.getEngine().loadContent(html);
+                textareaforcode.setText(html);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
+
         }
     }
 
@@ -43,18 +50,24 @@ public class HelloController {
     }
 
     private void loadHTML(File file) {
-        try (Scanner input = new Scanner(file, StandardCharsets.UTF_8)) {
-            StringBuilder htmlContent = new StringBuilder();
-            while (input.hasNextLine()) {
-                htmlContent.append(input.nextLine()).append("\n");
+        String url = textarea.getText();
+        if (isValidUrl(url)) {
+            try {
+                URL pageUrl = new URL(url);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(pageUrl.openStream()));
+                StringBuilder htmlContent = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    htmlContent.append(line).append("\n");
+                }
+                reader.close();
+                String html = htmlContent.toString();
+                htmleditor.setHtmlText(html);
+                webview.getEngine().loadContent(html);
+                textareaforcode.setText(html);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-            String html = htmlContent.toString();
-            htmleditor.setHtmlText(html);
-            webview.getEngine().loadContent(html);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -75,14 +88,13 @@ public class HelloController {
     }
 
     public void onSave(ActionEvent actionEvent) {
+        String html = webview.getEngine().executeScript("document.documentElement.outerHTML").toString();
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Save Document");
-        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("HTML files (*.html)", "*.html");
-        fileChooser.getExtensionFilters().add(extFilter);
-        File file = fileChooser.showSaveDialog(textarea.getScene().getWindow());
+        fileChooser.setTitle("Save HTML File");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("HTML Files", "*.html"));
+        File file = fileChooser.showSaveDialog(null);
         if (file != null) {
-            String content = htmleditor.getHtmlText();
-            saveToFile(content, file);
+            saveToFile(html, file);
         }
     }
 
@@ -109,6 +121,7 @@ public class HelloController {
                 String html = htmlContent.toString();
                 htmleditor.setHtmlText(html);
                 webview.getEngine().loadContent(html);
+                textareaforcode.setText(html);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -119,9 +132,17 @@ public class HelloController {
         // Add your URL validation logic here
         return url != null && !url.isEmpty();
     }
-
-    public void onChange(ActionEvent actionEvent) {
+    public void applyChanges(ActionEvent actionEvent) {
         String html = htmleditor.getHtmlText();
+        textareaforcode.setText(html);
         webview.getEngine().loadContent(html);
     }
+
+    public void onChange(ActionEvent actionEvent) {
+        String html = textareaforcode.getText();
+        htmleditor.setHtmlText(html);
+        webview.getEngine().loadContent(html);
+
+    }
+
 }
