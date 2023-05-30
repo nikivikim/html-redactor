@@ -19,7 +19,7 @@ _____
 
 ## Архитектура 
 <p align="center" width="100%">
-    <img width="60%" src="https://github.com/nikivikim/html-redactor/blob/master/classes.png">
+    <img width="60%" src="https://github.com/nikivikim/html-redactor/blob/master/src/classes.png">
 </p>
 
 ## Установка
